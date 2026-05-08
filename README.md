@@ -1,0 +1,119 @@
+# amazon-operator-stack
+
+Connect your Amazon seller account to Claude Code.
+
+After a 30-minute setup, you can ask Claude things like:
+
+- *"Pull last week's orders for ASIN B0XXXXXXX."*
+- *"Reconcile yesterday's shipment events against my Seller Central payouts."*
+- *"How many sessions did our hero ASIN get in March, and what was the conversion rate?"*
+
+Claude calls the right Amazon endpoint, with rate limits and retries handled for you.
+
+This is **read-only**. It can look at your data. It cannot change anything in your store. Adding write capabilities is covered in [HOMEWORK.md](./HOMEWORK.md).
+
+---
+
+## Who this is for
+
+Built for **Seller Sessions Live 2026** delegates.
+
+You should be:
+
+- An Amazon seller with a **Pro Seller** account (not Individual)
+- The **account holder** (not a staff user)
+- Comfortable copying and pasting into a terminal
+
+You don't need to know what an MCP server, OAuth token, or LWA app is. The wizard explains each one in plain language as you go.
+
+---
+
+## What you get
+
+| Asset                                     | Where                                            |
+| ----------------------------------------- | ------------------------------------------------ |
+| MCP server connecting Claude → SP-API      | This folder, after `npm install` and `npm run build` |
+| Read access to Orders, Finances, Sales & Traffic | Three tools registered with Claude Code          |
+| Local credentials file (`.env`)           | This folder, git-ignored, never sent anywhere    |
+| Claude Code MCP entry                     | `~/.claude/settings.json` (additive — your existing entries are untouched) |
+| Probe matrix (`npm run smoke-test`)        | Runs any time, tells you which roles are working |
+
+---
+
+## Quick start
+
+If you have **Node 20+** and **Claude Code** installed:
+
+```bash
+git clone https://github.com/sellersessions/amazon-operator-stack.git
+cd amazon-operator-stack
+npm install
+npm run setup
+npm run build
+npm run wire-claude
+```
+
+That's it. Restart Claude Code, then try:
+
+> *"Pull my last 7 days of Amazon orders."*
+
+If you're missing prerequisites, follow the full guide in [SETUP.md](./SETUP.md) instead.
+
+---
+
+## What the setup wizard does
+
+Run `npm run setup` and the wizard walks you through seven steps:
+
+1. **Pre-flight checks** — confirms Node, port 3000, internet to Amazon
+2. **Pick your region** — Europe, North America, or Far East
+3. **Pick your marketplaces** — primary one + any others you sell on
+4. **Register as an Amazon developer** — one-time, free, instant for read-only roles
+5. **Authorise the app** — click one button in Seller Central, paste a token
+6. **Test that everything works** — probe matrix tells you which endpoints are live
+7. **Save credentials** — to a local `.env` file, git-ignored
+
+If you get interrupted at any point, run `npm run resume`. The wizard picks up exactly where you left off.
+
+---
+
+## Architecture in one minute
+
+```
+┌──────────────────────┐                  ┌──────────────────────┐
+│   Claude Code (you)  │  ── stdio ────▶  │ amazon-operator-stack│
+│ in VS Code or CLI    │                  │  (this MCP server)   │
+└──────────────────────┘                  └──────────┬───────────┘
+                                                      │
+                                                 HTTPS │ LWA token
+                                                      ▼
+                                          ┌──────────────────────┐
+                                          │  Amazon SP-API       │
+                                          │  (your seller data)  │
+                                          └──────────────────────┘
+```
+
+- The server runs locally, on your machine.
+- It only ever reads data — no writes.
+- Your refresh token never leaves the `.env` file on this machine.
+
+---
+
+## What happens next
+
+| Step                       | File              |
+| -------------------------- | ----------------- |
+| First-time setup            | [SETUP.md](./SETUP.md) |
+| Add Ads API, PII, more marketplaces, or write capabilities | [HOMEWORK.md](./HOMEWORK.md) |
+| Re-test your roles after granting more | `npm run smoke-test` |
+| If something breaks         | [SETUP.md → Troubleshooting](./SETUP.md#troubleshooting) |
+
+---
+
+## Built by
+
+[**not a square**](https://notasquare.io) — operations and AI consulting for Amazon brands doing £500K to £30M.
+
+For Seller Sessions Live 2026, hosted by [Danny McMillan](https://sellersessions.com).
+
+[MIT licensed](./LICENSE).

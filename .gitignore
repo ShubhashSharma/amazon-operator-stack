@@ -1,0 +1,39 @@
+# Secrets — never commit
+.env
+.env.local
+.env.*.local
+.env.bak.*
+*.pem
+*.key
+credentials.json
+secrets/
+
+# Wizard state — contains your refresh token mid-flow
+setup-state.json
+
+# Build outputs
+dist/
+build/
+*.tsbuildinfo
+
+# Dependencies
+node_modules/
+node_modules\ */
+**/node_modules\ */
+
+# Logs
+*.log
+npm-debug.log*
+logs/
+
+# Editor / OS
+.DS_Store
+.idea/
+.vscode/
+*.swp
+Thumbs.db
+
+# iCloud sync artefacts
+* 2.*
+* 2/
+.icloud

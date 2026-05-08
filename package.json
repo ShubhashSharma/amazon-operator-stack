@@ -1,0 +1,56 @@
+{
+  "name": "amazon-operator-stack",
+  "version": "1.0.0",
+  "description": "Connect your Amazon seller account to Claude Code in 30 minutes. Read your orders, inventory, sales, traffic, and finances. Built for Seller Sessions Live 2026.",
+  "type": "module",
+  "main": "dist/server.js",
+  "bin": {
+    "amazon-operator-stack": "dist/server.js"
+  },
+  "scripts": {
+    "setup": "tsx src/wizard/index.ts",
+    "resume": "tsx src/wizard/index.ts --resume",
+    "smoke-test": "tsx src/probe.ts",
+    "wire-claude": "tsx src/wire-claude-code.ts",
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "dev": "tsx src/server.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@clack/prompts": "^0.7.0",
+    "@modelcontextprotocol/server": "^1.0.0",
+    "open": "^10.1.0",
+    "zod": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "files": [
+    "dist/**/*",
+    "src/**/*",
+    "README.md",
+    "SETUP.md",
+    "HOMEWORK.md",
+    "LICENSE",
+    ".env.example"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sellersessions/amazon-operator-stack.git"
+  },
+  "keywords": [
+    "amazon",
+    "sp-api",
+    "ads-api",
+    "mcp",
+    "claude-code",
+    "seller-sessions"
+  ]
+}
