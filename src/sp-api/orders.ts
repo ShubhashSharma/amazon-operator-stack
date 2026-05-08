@@ -21,6 +21,7 @@ import { loadConfig } from '../lib/config.js';
 import { rateLimit } from '../lib/rate-limiter.js';
 import { withRetry, ensureOk, AmazonApiError } from '../lib/retry.js';
 import { spApiHeaders, clearSpApiCache } from '../auth/lwa.js';
+import { spApiBaseUrl } from '../lib/endpoints.js';
 
 // ─────────────────────────────────────────────────────────────────────
 // Zod schemas — public API surface
@@ -87,7 +88,7 @@ export async function getOrders(
     pageCount++;
     await rateLimit('orders/getOrders');
 
-    const url = buildUrl(cfg.endpoint, cfg.marketplaceId, input, nextToken);
+    const url = buildUrl(spApiBaseUrl(cfg.endpoint), cfg.marketplaceId, input, nextToken);
 
     const data = await withRetry(async () => {
       let headers = await spApiHeaders();

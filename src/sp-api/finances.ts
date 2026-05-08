@@ -18,6 +18,7 @@ import { loadConfig } from '../lib/config.js';
 import { rateLimit } from '../lib/rate-limiter.js';
 import { withRetry, ensureOk, AmazonApiError } from '../lib/retry.js';
 import { spApiHeaders, clearSpApiCache } from '../auth/lwa.js';
+import { spApiBaseUrl } from '../lib/endpoints.js';
 
 export const ListFinancialEventsInput = z.object({
   postedAfter: z
@@ -69,7 +70,7 @@ export async function listFinancialEvents(
     pageCount++;
     await rateLimit('finances/listFinancialEvents');
 
-    const url = buildUrl(cfg.endpoint, input, nextToken);
+    const url = buildUrl(spApiBaseUrl(cfg.endpoint), input, nextToken);
 
     const data = await withRetry(async () => {
       let headers = await spApiHeaders();

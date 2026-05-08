@@ -15,6 +15,7 @@
 import * as p from '@clack/prompts';
 import { stageHeader, explainStage, dim, teal } from '../theme.js';
 import { REGIONS } from '../marketplaces.js';
+import { lwaTokenUrl, spApiBaseUrl, isMockMode } from '../../lib/endpoints.js';
 import type { SetupState, ProbeResult } from '../state.js';
 
 export async function validateStage(state: SetupState): Promise<SetupState> {
@@ -29,8 +30,12 @@ export async function validateStage(state: SetupState): Promise<SetupState> {
     'A green tick means the role is granted. An amber warning means the role exists but the data is gated (Brand Registry needed). A red mark means the role needs adding in Seller Central.',
   );
 
+  if (isMockMode()) {
+    p.log.info(`${dim('Mock mode active —')} ${teal(process.env.MOCK_BASE_URL!)}`);
+  }
+
   const spinner = p.spinner();
-  spinner.start('Asking Amazon for an access token...');
+  spinner.start(isMockMode() ? 'Asking the mock for an access token...' : 'Asking Amazon for an access token...');
 
   const region = REGIONS[state.region];
   let accessToken: string;
@@ -50,7 +55,7 @@ export async function validateStage(state: SetupState): Promise<SetupState> {
 
   for (const probe of probes) {
     spinner.start(`Testing ${probe.label}...`);
-    const result = await runProbe(probe, accessToken, region.spApiEndpoint);
+    const result = await runProbe(probe, accessToken, spApiBaseUrl(region.spApiEndpoint));
     results.push(result);
     spinner.stop(formatProbeLine(result));
   }
@@ -164,7 +169,7 @@ async function getAccessToken(creds: { clientId: string; clientSecret: string; r
     client_secret: creds.clientSecret,
   });
 
-  const res = await fetch('https://api.amazon.com/auth/o2/token', {
+  const res = await fetch(lwaTokenUrl(), {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: body.toString(),

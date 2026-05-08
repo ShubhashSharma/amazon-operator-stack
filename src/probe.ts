@@ -14,6 +14,7 @@
  */
 
 import { loadConfig } from './lib/config.js';
+import { lwaTokenUrl, spApiBaseUrl, isMockMode } from './lib/endpoints.js';
 import { dim, teal } from './wizard/theme.js';
 
 interface ProbeResult {
@@ -31,7 +32,7 @@ async function main(): Promise<void> {
   const cfg = loadConfig();
 
   console.log(`Marketplace:   ${cfg.spApi.marketplaceId}`);
-  console.log(`Endpoint:      ${cfg.spApi.endpoint}`);
+  console.log(`Endpoint:      ${spApiBaseUrl(cfg.spApi.endpoint)}${isMockMode() ? '  ' + teal('(mock)') : ''}`);
   console.log(`Ads API:       ${cfg.adsApi.configured ? teal('configured') : dim('not configured (homework)')}`);
   console.log('');
 
@@ -52,7 +53,7 @@ async function main(): Promise<void> {
 
   for (const probe of probes) {
     process.stdout.write(`${probe.label.padEnd(34, ' ')}  `);
-    const r = await runProbe(probe, accessToken, cfg.spApi.endpoint);
+    const r = await runProbe(probe, accessToken, spApiBaseUrl(cfg.spApi.endpoint));
     results.push(r);
     console.log(formatStatus(r));
   }
@@ -120,7 +121,7 @@ async function getAccessToken(cfg: ReturnType<typeof loadConfig>): Promise<strin
     client_id: cfg.spApi.clientId,
     client_secret: cfg.spApi.clientSecret,
   });
-  const res = await fetch('https://api.amazon.com/auth/o2/token', {
+  const res = await fetch(lwaTokenUrl(), {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: body.toString(),

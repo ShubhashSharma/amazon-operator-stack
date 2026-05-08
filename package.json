@@ -12,6 +12,7 @@
     "resume": "tsx src/wizard/index.ts --resume",
     "smoke-test": "tsx src/probe.ts",
     "wire-claude": "tsx src/wire-claude-code.ts",
+    "mock": "tsx tools/mock-sp-api.ts",
     "build": "tsc",
     "start": "node dist/server.js",
     "dev": "tsx src/server.ts",

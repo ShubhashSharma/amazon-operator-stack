@@ -20,6 +20,7 @@ import { loadConfig } from '../lib/config.js';
 import { rateLimit } from '../lib/rate-limiter.js';
 import { withRetry, ensureOk, AmazonApiError } from '../lib/retry.js';
 import { spApiHeaders, clearSpApiCache } from '../auth/lwa.js';
+import { spApiBaseUrl } from '../lib/endpoints.js';
 
 export const GetSalesAndTrafficInput = z.object({
   startDate: z
@@ -78,7 +79,7 @@ export async function getSalesAndTraffic(
   };
 
   const createRes = await withRetry(() =>
-    fetchSp(`${cfg.endpoint}/reports/2021-06-30/reports`, {
+    fetchSp(`${spApiBaseUrl(cfg.endpoint)}/reports/2021-06-30/reports`, {
       method: 'POST',
       body: JSON.stringify(createBody),
     }),
@@ -93,7 +94,7 @@ export async function getSalesAndTraffic(
   while (Date.now() < deadline) {
     await rateLimit('reports/getReport');
     const status_res = await withRetry(() =>
-      fetchSp(`${cfg.endpoint}/reports/2021-06-30/reports/${reportId}`),
+      fetchSp(`${spApiBaseUrl(cfg.endpoint)}/reports/2021-06-30/reports/${reportId}`),
     ) as Record<string, unknown>;
 
     status = String(status_res.processingStatus ?? 'UNKNOWN');
@@ -115,7 +116,7 @@ export async function getSalesAndTraffic(
   // 3. Fetch the document URL + download
   await rateLimit('reports/getReportDocument');
   const docMeta = await withRetry(() =>
-    fetchSp(`${cfg.endpoint}/reports/2021-06-30/documents/${documentId}`),
+    fetchSp(`${spApiBaseUrl(cfg.endpoint)}/reports/2021-06-30/documents/${documentId}`),
   ) as Record<string, unknown>;
 
   const url = String(docMeta.url ?? '');

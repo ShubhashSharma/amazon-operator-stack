@@ -11,6 +11,7 @@
 
 import { loadConfig, log } from '../lib/config.js';
 import { ensureOk } from '../lib/retry.js';
+import { lwaTokenUrl } from '../lib/endpoints.js';
 
 interface AccessTokenCache {
   token:     string;
@@ -18,8 +19,6 @@ interface AccessTokenCache {
 }
 
 let cache: AccessTokenCache | null = null;
-
-const LWA_TOKEN_URL = 'https://api.amazon.com/auth/o2/token';
 
 /**
  * Get a valid SP-API access token, refreshing if needed.
@@ -41,7 +40,7 @@ export async function getSpApiAccessToken(): Promise<string> {
     client_secret: cfg.clientSecret,
   });
 
-  const res = await fetch(LWA_TOKEN_URL, {
+  const res = await fetch(lwaTokenUrl(), {
     method:  'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body:    body.toString(),
