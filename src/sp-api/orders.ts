@@ -16,7 +16,7 @@
  *     rate limits within minutes. Use the Orders Report instead at scale.
  */
 
-import * as z from 'zod/v4';
+import { z } from 'zod';
 import { loadConfig } from '../lib/config.js';
 import { rateLimit } from '../lib/rate-limiter.js';
 import { withRetry, ensureOk, AmazonApiError } from '../lib/retry.js';
@@ -147,7 +147,7 @@ function buildUrl(
 // Tool registration helper — used by index.ts to add this to the server
 // ─────────────────────────────────────────────────────────────────────
 
-import type { McpServer } from '@modelcontextprotocol/server';
+import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 
 export function registerOrdersTool(server: McpServer): void {
   server.registerTool(

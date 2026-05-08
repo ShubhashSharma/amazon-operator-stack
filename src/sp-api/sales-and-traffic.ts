@@ -15,7 +15,7 @@
  * Read-only. Idempotent. Day-chunked automatically.
  */
 
-import * as z from 'zod/v4';
+import { z } from 'zod';
 import { loadConfig } from '../lib/config.js';
 import { rateLimit } from '../lib/rate-limiter.js';
 import { withRetry, ensureOk, AmazonApiError } from '../lib/retry.js';
@@ -161,7 +161,7 @@ async function fetchSp(url: string, init: RequestInit = {}): Promise<unknown> {
   }
 }
 
-import type { McpServer } from '@modelcontextprotocol/server';
+import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 
 export function registerSalesAndTrafficTool(server: McpServer): void {
   server.registerTool(

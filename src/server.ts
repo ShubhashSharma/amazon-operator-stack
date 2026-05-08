@@ -11,8 +11,8 @@
  * Reference pattern: src/sp-api/orders.ts. Every other tool follows that shape.
  */
 
-import { McpServer } from '@modelcontextprotocol/server';
-import { StdioServerTransport } from '@modelcontextprotocol/server/stdio';
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 
 import { loadConfig, log } from './lib/config.js';
 

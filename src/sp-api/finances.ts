@@ -13,7 +13,7 @@
  * Read-only. Idempotent. Paginates automatically.
  */
 
-import * as z from 'zod/v4';
+import { z } from 'zod';
 import { loadConfig } from '../lib/config.js';
 import { rateLimit } from '../lib/rate-limiter.js';
 import { withRetry, ensureOk, AmazonApiError } from '../lib/retry.js';
@@ -140,7 +140,7 @@ function buildUrl(
   return `${endpoint}/finances/v0/financialEvents?${params.toString()}`;
 }
 
-import type { McpServer } from '@modelcontextprotocol/server';
+import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 
 export function registerFinancesTool(server: McpServer): void {
   server.registerTool(
