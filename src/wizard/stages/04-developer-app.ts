@@ -24,6 +24,11 @@ const DEV_CONSOLE_URL = 'https://sellercentral.amazon.com/sellingpartner/develop
 export async function developerAppStage(state: SetupState): Promise<SetupState> {
   stageHeader(4, 7, 'Create your SP-API app in Seller Central');
 
+  if (state.spApi?.clientId && state.spApi?.clientSecret) {
+    p.log.success(`${teal('✓ prefilled:')} ${state.spApi.appName} ${dim('(LWA Client ID + secret loaded)')}`);
+    return { ...state, lastCompletedStage: 'developer-app' };
+  }
+
   explainStage(
     'Amazon needs you to register as a developer (one-time, free, instant for read-only roles) and create an app for your own seller account. The app is private — only you use it.',
     'We open the Developer Console for you, you fill in a short form, then you paste two values back here: the LWA Client ID and Client Secret.',

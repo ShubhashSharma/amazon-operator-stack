@@ -44,8 +44,14 @@ async function main(): Promise<void> {
   }
 
   if (!existsSync(serverEntry)) {
-    console.error(`✗ Server not built. Run "npm run build" first.`);
-    process.exit(1);
+    console.log(`${dim('No build found. Running')} ${teal('npm run build')} ${dim('for you...')}`);
+    const { spawnSync } = await import('node:child_process');
+    const buildResult = spawnSync('npm', ['run', 'build'], { cwd: repoRoot, stdio: 'inherit' });
+    if (buildResult.status !== 0 || !existsSync(serverEntry)) {
+      console.error(`✗ Build failed. Fix the errors above and re-run "npm run wire-claude".`);
+      process.exit(1);
+    }
+    console.log(`${teal('✓')} Built ${serverEntry}`);
   }
 
   const settingsPath = resolveSettingsPath();

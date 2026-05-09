@@ -21,6 +21,11 @@ export async function selfAuthoriseStage(state: SetupState): Promise<SetupState>
     throw new Error('SP-API credentials missing. Re-run setup from the start.');
   }
 
+  if (state.spApi.refreshToken) {
+    p.log.success(`${teal('✓ prefilled:')} refresh token loaded`);
+    return { ...state, lastCompletedStage: 'self-authorize' };
+  }
+
   explainStage(
     'A refresh token lets the MCP server talk to your seller account. Amazon gives you one when you click "Authorize" on your own app — no redirect, no callback, just one screen.',
     'You click Authorize, copy the long token Amazon shows you, paste it here. Then we save everything to .env.',

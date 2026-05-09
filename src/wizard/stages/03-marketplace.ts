@@ -11,7 +11,7 @@
  */
 
 import * as p from '@clack/prompts';
-import { stageHeader, explainStage } from '../theme.js';
+import { stageHeader, explainStage, teal, dim } from '../theme.js';
 import { marketplacesByRegion } from '../marketplaces.js';
 import type { SetupState } from '../state.js';
 
@@ -23,6 +23,14 @@ export async function marketplaceStage(state: SetupState): Promise<SetupState> {
   }
 
   const available = marketplacesByRegion(state.region);
+
+  if (state.primaryMarketplaceId && state.primaryMarketplaceLabel) {
+    const enabledCount = state.enabledMarketplaceIds?.length ?? 1;
+    p.log.success(
+      `${teal('✓ prefilled:')} ${state.primaryMarketplaceLabel} ${dim(`(+ ${enabledCount - 1} other)`)}`,
+    );
+    return { ...state, lastCompletedStage: 'marketplace' };
+  }
 
   explainStage(
     'Amazon treats each country as a separate marketplace. Your account may only sell in one or it may sell across many.',

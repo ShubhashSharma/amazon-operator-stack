@@ -18,6 +18,7 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { banner, dim, teal } from './theme.js';
 import { loadState, saveState, type SetupState } from './state.js';
+import { loadPrefill } from './prefill.js';
 
 import { preflightStage } from './stages/01-preflight.js';
 import { regionStage } from './stages/02-region.js';
@@ -48,7 +49,26 @@ async function main(): Promise<void> {
   let state = loadState(repoRoot);
   const isFresh = state.lastCompletedStage === 'none';
 
-  if (!isFresh && !flags.resume) {
+  // Apply prefill on top of existing state. Stages detect prefilled values
+  // and short-circuit silently rather than prompting.
+  if (flags.prefilled) {
+    try {
+      const result = loadPrefill(repoRoot, flags.prefilled, state);
+      state = result.state;
+      const filled = Object.entries(result.prefilled)
+        .filter(([, v]) => v)
+        .map(([k]) => k)
+        .join(', ');
+      p.log.info(
+        `${teal('Prefilled')} from ${dim(result.prefillFilePath)}: ${filled || dim('(no values applied)')}`,
+      );
+    } catch (err) {
+      console.error(`✗ ${(err as Error).message}`);
+      process.exit(1);
+    }
+  }
+
+  if (!isFresh && !flags.resume && !flags.prefilled) {
     const action = await p.select({
       message: `Found existing setup state (last completed: ${teal(state.lastCompletedStage)}). What now?`,
       options: [
@@ -119,11 +139,16 @@ async function runStageIfPending(
   return next;
 }
 
-function parseFlags(): { resume: boolean; prefilled: boolean } {
+function parseFlags(): { resume: boolean; prefilled: string | true | false } {
   const args = process.argv.slice(2);
+  let prefilled: string | true | false = false;
+  for (const arg of args) {
+    if (arg === '--prefilled') prefilled = true;
+    else if (arg.startsWith('--prefilled=')) prefilled = arg.slice('--prefilled='.length);
+  }
   return {
     resume: args.includes('--resume'),
-    prefilled: args.includes('--prefilled'),
+    prefilled,
   };
 }
 

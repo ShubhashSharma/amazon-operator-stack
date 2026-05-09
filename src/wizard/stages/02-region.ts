@@ -7,12 +7,17 @@
  */
 
 import * as p from '@clack/prompts';
-import { stageHeader, explainStage } from '../theme.js';
+import { stageHeader, explainStage, teal } from '../theme.js';
 import { REGIONS } from '../marketplaces.js';
 import type { SetupState } from '../state.js';
 
 export async function regionStage(state: SetupState): Promise<SetupState> {
   stageHeader(2, 7, 'Pick your Amazon region');
+
+  if (state.region) {
+    p.log.success(`${teal('✓ prefilled:')} ${REGIONS[state.region].label.split(' (')[0]}`);
+    return { ...state, lastCompletedStage: 'region' };
+  }
 
   explainStage(
     'Amazon runs three regional clouds. Your Seller Central account lives in one of them, and we need to talk to the matching one.',

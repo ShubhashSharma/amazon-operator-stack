@@ -9,10 +9,12 @@
   },
   "scripts": {
     "setup": "tsx src/wizard/index.ts",
+    "setup:prefilled": "tsx src/wizard/index.ts --prefilled",
     "resume": "tsx src/wizard/index.ts --resume",
     "smoke-test": "tsx src/probe.ts",
     "wire-claude": "tsx src/wire-claude-code.ts",
     "mock": "tsx tools/mock-sp-api.ts",
+    "demo": "bash scripts/demo.sh",
     "build": "tsc",
     "start": "node dist/server.js",
     "dev": "tsx src/server.ts",

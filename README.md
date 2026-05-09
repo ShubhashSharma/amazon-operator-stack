@@ -53,11 +53,30 @@ npm run build
 npm run wire-claude
 ```
 
-That's it. Restart Claude Code, then try:
-
-> *"Pull my last 7 days of Amazon orders."*
+That's it. Restart Claude Code, then try one of the [sample questions](#try-it) below.
 
 If you're missing prerequisites, follow the full guide in [SETUP.md](./SETUP.md) instead.
+
+---
+
+## Try it
+
+Once Claude Code has restarted, paste any of these into the chat:
+
+| Goal                              | What to ask Claude                                                            |
+| --------------------------------- | ----------------------------------------------------------------------------- |
+| Yesterday's revenue               | *"Pull my Amazon orders from the last 24 hours and total the revenue."*        |
+| Top 5 SKUs by revenue this week   | *"Pull the last 7 days of orders, group by SKU, sort by revenue."*             |
+| Reconcile against Seller Central  | *"List financial events from yesterday, sum the shipment events, and tell me what to expect in my next payout."* |
+| Find unusual fees                  | *"Pull the last 14 days of financial events. Flag any service fees that look unusual relative to the average."* |
+| Sales & Traffic deep dive         | *"Get last week's Sales & Traffic report. Which ASIN had the highest sessions but the worst conversion rate?"*   |
+| Stockout risk                      | *"Pull my FBA inventory summary. Highlight any SKU with under 30 days of cover at current sales velocity."*       |
+
+Three things Claude does well with these tools:
+
+1. **Multi-step reasoning** — chains tool calls together (orders → financial events → reconciliation) without you having to script it.
+2. **Surface gotchas** — the tools return warnings inline (e.g. "Pending orders included" or "fees come back as negative"), and Claude reads those before drawing conclusions.
+3. **Caveat its own answers** — if Sales & Traffic is gated by Brand Registry, Claude says so rather than silently returning incomplete data.
 
 ---
 
