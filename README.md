@@ -45,7 +45,7 @@ You don't need to know what an MCP server, OAuth token, or LWA app is. The wizar
 If you have **Node 20+** and **Claude Code** installed:
 
 ```bash
-git clone https://github.com/sellersessions/amazon-operator-stack.git
+git clone https://github.com/ShubhashSharma/amazon-operator-stack.git
 cd amazon-operator-stack
 npm install
 npm run setup
@@ -56,6 +56,12 @@ npm run wire-claude
 That's it. Restart Claude Code, then try one of the [sample questions](#try-it) below.
 
 If you're missing prerequisites, follow the full guide in [SETUP.md](./SETUP.md) instead.
+
+### Prefer a guided web wizard?
+
+Open **[amazon-operator-stack-setup.vercel.app](https://amazon-operator-stack-setup.vercel.app)** in any browser. It walks you through the same 7 steps as a multi-step form, and at the end you download a working `.env` file you drop into the cloned repo. Privacy-by-design — your refresh token never leaves your browser.
+
+This is the path used during the live Seller Sessions Live 2026 walk-through.
 
 ---
 
