@@ -59,9 +59,11 @@ If you're missing prerequisites, follow the full guide in [SETUP.md](./SETUP.md)
 
 ### Prefer a guided web wizard?
 
-Open **[amazon-operator-stack-setup.vercel.app](https://amazon-operator-stack-setup.vercel.app)** in any browser. It walks you through the same 7 steps as a multi-step form, and at the end you download a working `.env` file you drop into the cloned repo. Privacy-by-design — your refresh token never leaves your browser.
+Open **[amazon-operator-stack-setup.vercel.app](https://amazon-operator-stack-setup.vercel.app)** in any browser. It walks you through the same 7 steps as a multi-step form, your progress is saved automatically as you go, and the final step gives you a single copy-paste command that clones this repo, drops the `.env` in place, and wires it into Claude Code.
 
-This is the path used during the live Seller Sessions Live 2026 walk-through.
+Privacy-by-design — no backend, your refresh token never leaves your browser. Optional JSON backup of in-progress answers if you want belt-and-braces on the autosave.
+
+The take-home companion to the Seller Sessions Live 2026 stage demo.
 
 ---
 
