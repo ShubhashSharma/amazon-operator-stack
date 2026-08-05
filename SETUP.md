@@ -22,7 +22,8 @@ Read this end-to-end if it's your first time. The wizard mirrors these steps and
 4. [Wire it into Claude Code](#4-wire-it-into-claude-code)
 5. [Try it out](#5-try-it-out)
 6. [Troubleshooting](#troubleshooting)
-7. [Glossary (plain English)](#glossary-plain-english)
+7. [Upgrading from v1.0.0](#upgrading-from-v100)
+8. [Glossary (plain English)](#glossary-plain-english)
 
 ---
 
@@ -93,9 +94,9 @@ Amazon runs three regional clouds. Pick the one your Seller Central account live
 
 | Region | Marketplaces                                                  |
 | ------ | ------------------------------------------------------------- |
-| Europe | UK, Germany, France, Italy, Spain, Netherlands, Sweden, Poland, Belgium, Turkey |
+| Europe | UK, Germany, France, Italy, Spain, Netherlands, Sweden, Poland, Belgium, Turkey, India |
 | North America | US, Canada, Mexico, Brazil                              |
-| Far East | Japan, Australia, Singapore, India                          |
+| Far East | Japan, Australia, Singapore                                 |
 
 If your account is North America (US sellers), pick **North America**. If it's UK or any EU country, pick **Europe**. Most sellers know this from the URL they sign in to (`sellercentral.amazon.co.uk` = EU, `sellercentral.amazon.com` = NA, etc.).
 
@@ -187,7 +188,7 @@ Done. Your Amazon seller account is connected.
 
 Primary marketplace:  United Kingdom (amazon.co.uk)
 Credentials saved at: /Users/you/code/amazon-operator-stack/.env
-Tools available:      4
+Probes passing:       4 of 5
 
 Next:  npm run wire-claude    Register the server with Claude Code
        npm run smoke-test     Re-run the probe matrix any time
@@ -247,7 +248,7 @@ Two common causes:
 
 ### Probe shows Sales & Traffic as "gated"
 
-This is normal if you're not in Brand Registry. Sales & Traffic data is reserved for brand registered sellers. Either skip it (the other tools still work) or apply for Brand Registry and come back. [HOMEWORK.md](./HOMEWORK.md) has the steps.
+This is normal if you're not in Brand Registry. Sales & Traffic data is reserved for brand registered sellers. Either skip it (the other tools still work) or apply via [Amazon Brand Registry](https://brandservices.amazon.co.uk) and come back once enrolled.
 
 ### Claude Code doesn't see the new tools
 

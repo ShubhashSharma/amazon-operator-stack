@@ -10,7 +10,7 @@
  */
 
 import * as p from '@clack/prompts';
-import { existsSync, readFileSync, writeFileSync, copyFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync, copyFileSync, chmodSync } from 'node:fs';
 import { join } from 'node:path';
 import { stageHeader, finaleSummary, dim, teal } from '../theme.js';
 import { REGIONS, findMarketplace } from '../marketplaces.js';
@@ -33,6 +33,9 @@ export async function finaliseStage(state: SetupState, repoRoot: string): Promis
     const ts = new Date().toISOString().replace(/[:.]/g, '-');
     const backup = `${envPath}.bak.${ts}`;
     copyFileSync(envPath, backup);
+    // copyFileSync preserves the source mode — a hand-made 644 .env would
+    // yield a 644 backup holding a live refresh token. Force owner-only.
+    if (process.platform !== 'win32') chmodSync(backup, 0o600);
     p.log.info(`${dim('Existing .env backed up to')}  ${teal(backup)}`);
   }
 

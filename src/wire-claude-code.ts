@@ -27,6 +27,7 @@ import { spawnSync } from 'node:child_process';
 import { dirname, join, resolve } from 'node:path';
 import { homedir } from 'node:os';
 import { fileURLToPath } from 'node:url';
+import { stripQuotes } from './lib/config.js';
 import { dim, teal } from './wizard/theme.js';
 
 const SERVER_NAME = 'amazon-operator-stack';
@@ -99,10 +100,14 @@ async function main(): Promise<void> {
   if (DRY_RUN) {
     console.log(`${dim('Would run:')} claude ${addArgs.join(' ')}`);
   } else {
-    // "mcp add" refuses duplicates — remove first so re-runs update cleanly.
-    runClaude(['mcp', 'remove', SERVER_NAME, '--scope', 'user'], true);
-    runClaude(['mcp', 'remove', SERVER_NAME, '--scope', 'local'], true);
-    const add = runClaude(addArgs);
+    // Add FIRST; only on a duplicate do we remove and re-add. Removing before
+    // a failed add would leave a user with a working entry strictly worse off.
+    let add = runClaude(addArgs);
+    if (add.status !== 0 || /already exists/i.test(add.output)) {
+      runClaude(['mcp', 'remove', SERVER_NAME, '--scope', 'user'], true);
+      runClaude(['mcp', 'remove', SERVER_NAME, '--scope', 'local'], true);
+      add = runClaude(addArgs);
+    }
     if (add.status !== 0) {
       fail(`"claude mcp add" failed:\n${add.output}`,
         `Register manually with:\n\n    ${manualCommand(serverEntry)}`);
@@ -121,9 +126,17 @@ async function main(): Promise<void> {
         `Register manually with:\n\n    ${manualCommand(serverEntry)}\n\n  then run "npm run doctor".`);
     }
     const registered = readUserScopeEntry();
-    if (registered && registered.args?.[0] !== serverEntry) {
+    if (registered === null) {
+      console.log(`${dim('!')} Could not independently read ~/.claude.json to double-check the entry — trusting the CLI. "npm run doctor" will verify properly.`);
+    } else if (registered.args?.[0] !== serverEntry) {
       fail(`A "${SERVER_NAME}" entry exists but points at\n    ${registered.args?.[0] ?? '(nothing)'}\n  instead of this repo's build.`,
         `Register manually with:\n\n    ${manualCommand(serverEntry)}\n\n  then run "npm run doctor".`);
+    }
+    // "mcp get" resolves local/project scope ahead of user scope — if the
+    // entry it shows isn't ours, a stale same-name server is shadowing us.
+    if (/Scope:/i.test(get.output) && !/Scope:\s*User/i.test(get.output)) {
+      console.log(`${dim('!')} A "${SERVER_NAME}" entry in another scope (local or project) is shadowing the user-scope one.`);
+      console.log(`  Remove it with: claude mcp remove ${SERVER_NAME} -s local   (or -s project, run from the folder that owns it)`);
     }
     if (/Failed to connect/i.test(get.output)) {
       console.log(`${teal('✓')} Registered, but the server failed its first health check.`);
@@ -185,7 +198,7 @@ function migrateLegacySettings(envFile: string): void {
       const missing = Object.entries(legacy.env).filter(([k, v]) => v && !envVars[k]);
       if (missing.length > 0 && !DRY_RUN) {
         const addition = ['', '# Recovered from the v1.0.0 Claude Code settings entry during migration',
-          ...missing.map(([k, v]) => `${k}=${v}`), ''].join('\n');
+          ...missing.filter(([, v]) => typeof v === 'string').map(([k, v]) => `${k}=${v}`), ''].join('\n');
         writeFileSync(envFile, readFileSync(envFile, 'utf8') + addition, 'utf8');
         if (!IS_WINDOWS) chmodSync(envFile, 0o600);
         console.log(`${teal('✓')} Copied ${missing.length} credential value(s) from the old entry into .env (0600).`);
@@ -244,7 +257,13 @@ function findClaudeCli(): { version: string } | null {
 }
 
 function runClaude(args: string[], ignoreFailure = false): { status: number; output: string } {
-  const result = spawnSync('claude', args, {
+  // With shell:true Node performs NO quoting of its own (DEP0190), and on
+  // Windows the default Node lives in "C:\Program Files\..." — unquoted,
+  // cmd.exe splits every spaced path. Quote args ourselves on that platform.
+  const shellArgs = IS_WINDOWS
+    ? args.map(a => (/[\s&^%()]/.test(a) ? `"${a}"` : a))
+    : args;
+  const result = spawnSync('claude', shellArgs, {
     encoding: 'utf8',
     shell: IS_WINDOWS, // resolves claude.cmd on Windows
     timeout: 30_000,
@@ -289,14 +308,17 @@ function readEnvFile(path: string): Record<string, string> {
     const eq = trimmed.indexOf('=');
     if (eq < 0) continue;
     const key = trimmed.slice(0, eq).trim();
-    const value = trimmed.slice(eq + 1).trim();
+    const value = stripQuotes(trimmed.slice(eq + 1).trim());
     if (key && value) out[key] = value;
   }
   return out;
 }
 
 function shellQuote(p: string): string {
-  return /[\s'"$]/.test(p) ? `"${p}"` : p;
+  if (!/[^A-Za-z0-9_\-./:\\]/.test(p)) return p;
+  // Double quotes on Windows (cmd), single quotes elsewhere ($ and " are
+  // literal inside single quotes, so paths can't expand or break the string).
+  return IS_WINDOWS ? `"${p}"` : `'${p.replace(/'/g, `'\\''`)}'`;
 }
 
 function findRepoRoot(): string {

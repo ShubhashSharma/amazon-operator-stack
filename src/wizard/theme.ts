@@ -70,7 +70,7 @@ export function finaleSummary(opts: {
       '',
       `Primary marketplace:  ${opts.marketplace}`,
       `Credentials saved at: ${opts.envFilePath}`,
-      `Tools available:      ${opts.toolsAvailable}`,
+      `Probes passing:       ${opts.toolsAvailable} of 5`,
       '',
       `Next:  ${teal('npm run wire-claude')}    Register the server with Claude Code`,
       `       ${teal('npm run smoke-test')}    Re-run the probe matrix any time`,

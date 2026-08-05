@@ -18,11 +18,12 @@
  * Usage:  npm run doctor          Exit 0 = every layer green.
  */
 
-import { existsSync, readFileSync, statSync } from 'node:fs';
+import { existsSync, readFileSync, statSync, realpathSync } from 'node:fs';
 import { spawn } from 'node:child_process';
-import { dirname, join, resolve } from 'node:path';
+import { dirname, isAbsolute, join, normalize, resolve } from 'node:path';
 import { homedir } from 'node:os';
 import { fileURLToPath } from 'node:url';
+import { stripQuotes } from './lib/config.js';
 import { dim, teal } from './wizard/theme.js';
 
 const SERVER_NAME = 'amazon-operator-stack';
@@ -61,11 +62,16 @@ function checkRegistered(): McpServerEntry {
   // Read the user config directly — no CLI dependency, no server spawning.
   const userConfigPath = join(homedir(), '.claude.json');
   let entry: McpServerEntry | undefined;
+  let configUnreadable: string | null = null;
   if (existsSync(userConfigPath)) {
     try {
       const config = JSON.parse(readFileSync(userConfigPath, 'utf8'));
       entry = config?.mcpServers?.[SERVER_NAME];
-    } catch { /* fall through to failure below */ }
+    } catch (err) {
+      // "Unreadable config" and "entry absent" need different fixes —
+      // re-running wire-claude cannot repair a corrupt file.
+      configUnreadable = (err as Error).message;
+    }
   }
 
   // A v1.0.0 install wrote to settings.json instead — call that out precisely.
@@ -78,6 +84,10 @@ function checkRegistered(): McpServerEntry {
   }
 
   if (!entry) {
+    if (configUnreadable) {
+      fail(layer, `~/.claude.json could not be read or parsed:\n      ${configUnreadable}`,
+        `Fix or restore that file first (re-running wire-claude cannot repair it). If Claude Code itself starts fine, ask it — otherwise restore from a backup.`);
+    }
     if (legacyPresent) {
       fail(layer, `found only the old v1.0.0 entry in ~/.claude/settings.json, which Claude Code does not load servers from`,
         `Run "npm run wire-claude" — it migrates the old entry (credentials included) and registers properly.`);
@@ -92,7 +102,7 @@ function checkRegistered(): McpServerEntry {
   }
 
   const registeredScript = entry.args?.[0] ?? '';
-  if (registeredScript !== distEntry) {
+  if (!samePath(registeredScript, distEntry)) {
     fail(layer, `the entry points at\n      ${registeredScript || '(nothing)'}\n    but this repo builds to\n      ${distEntry}\n    (moved or re-cloned the folder?)`,
       `Run "npm run wire-claude" from this folder to re-point it.`);
   }
@@ -109,34 +119,47 @@ async function checkSpawnable(entry: McpServerEntry): Promise<void> {
   if (!existsSync(distEntry)) {
     fail(layer, `no build at ${distEntry}`, `Run "npm run build".`);
   }
-  if (!existsSync(entry.command)) {
+  // Only meaningful for absolute commands — a bare "node" resolves via PATH.
+  if (isAbsolute(entry.command) && !existsSync(entry.command)) {
     fail(layer, `the registered Node binary is gone:\n      ${entry.command}\n    (Node was upgraded or removed since wiring)`,
       `Run "npm run wire-claude" to re-pin the current Node.`);
   }
 
   const result = await mcpHandshake(entry.command, entry.args ?? []);
   if (!result.ok) {
-    fail(layer, `the server did not answer an MCP initialize within 8s.\n    stderr said:\n${indent(result.stderr || '(nothing)', 6)}`,
-      `The stderr above is the actual reason. Most common: .env problems — check layer 3 by hand ("npm run doctor" re-run after fixing).`);
+    const reason = result.timedOut
+      ? `the server did not answer an MCP initialize within ${HANDSHAKE_TIMEOUT_MS / 1000}s (timed out — slow first start is possible on cold machines; re-run once before trusting this).`
+      : `the server exited without answering an MCP initialize.`;
+    fail(layer, `${reason}\n    stderr said:\n${indent(result.stderr || '(nothing)', 6)}`,
+      `The stderr above is the actual reason. Most common: .env problems — fix what it names and re-run "npm run doctor".`);
   }
   pass(layer, 'initialize handshake answered');
 }
 
-function mcpHandshake(command: string, args: string[]): Promise<{ ok: boolean; stderr: string }> {
+const HANDSHAKE_TIMEOUT_MS = 30_000;
+
+function mcpHandshake(command: string, args: string[]): Promise<{ ok: boolean; timedOut: boolean; stderr: string }> {
   return new Promise(resolvePromise => {
     const child = spawn(command, args, { stdio: ['pipe', 'pipe', 'pipe'] });
     let stdout = '';
     let stderr = '';
     let settled = false;
+    let timedOut = false;
 
     const finish = (ok: boolean) => {
       if (settled) return;
       settled = true;
-      child.kill();
-      resolvePromise({ ok, stderr: stderr.trim() });
+      try { child.kill(); } catch { /* already gone */ }
+      // A child that ignores SIGTERM would keep our event loop alive via its
+      // pipes — cut them loose and escalate so doctor always exits.
+      child.stdout.destroy();
+      child.stderr.destroy();
+      child.stdin.destroy();
+      setTimeout(() => { try { child.kill('SIGKILL'); } catch { /* gone */ } }, 2_000).unref();
+      resolvePromise({ ok, timedOut, stderr: stderr.trim() });
     };
 
-    const timer = setTimeout(() => finish(false), 8_000);
+    const timer = setTimeout(() => { timedOut = true; finish(false); }, HANDSHAKE_TIMEOUT_MS);
     child.stdout.on('data', (d: Buffer) => {
       stdout += d.toString();
       // Any JSON-RPC result naming our server counts as a successful handshake.
@@ -148,6 +171,9 @@ function mcpHandshake(command: string, args: string[]): Promise<{ ok: boolean; s
     child.stderr.on('data', (d: Buffer) => { stderr += d.toString(); });
     child.on('error', () => { clearTimeout(timer); finish(false); });
     child.on('exit', () => { clearTimeout(timer); finish(false); });
+    // If spawn dies between the existence check and here, the write EPIPEs —
+    // swallow it so doctor reports the failure instead of crashing on it.
+    child.stdin.on('error', () => { /* reported via exit/error events */ });
 
     child.stdin.write(JSON.stringify({
       jsonrpc: '2.0', id: 1, method: 'initialize',
@@ -158,6 +184,18 @@ function mcpHandshake(command: string, args: string[]): Promise<{ ok: boolean; s
       },
     }) + '\n');
   });
+}
+
+/** Path equality that survives symlinks, separators, and case-insensitive filesystems. */
+function samePath(a: string, b: string): boolean {
+  if (!a || !b) return false;
+  const canon = (p: string): string => {
+    let out = p;
+    try { out = realpathSync(p); } catch { /* keep as-is */ }
+    out = normalize(out);
+    return process.platform === 'win32' || process.platform === 'darwin' ? out.toLowerCase() : out;
+  };
+  return canon(a) === canon(b);
 }
 
 // ── Layer 3: credentials file ────────────────────────────────────────────
@@ -182,7 +220,7 @@ function checkCredentialsFile(): Record<string, string> {
     const trimmed = line.trim();
     if (!trimmed || trimmed.startsWith('#')) continue;
     const eq = trimmed.indexOf('=');
-    if (eq > 0) env[trimmed.slice(0, eq).trim()] = trimmed.slice(eq + 1).trim();
+    if (eq > 0) env[trimmed.slice(0, eq).trim()] = stripQuotes(trimmed.slice(eq + 1).trim());
   }
 
   // Mirrors what src/lib/config.ts refuses to start without.

@@ -63,7 +63,7 @@ If you're missing prerequisites, follow the full guide in [SETUP.md](./SETUP.md)
 
 ### Prefer a guided web wizard?
 
-Open **[amazon-operator-stack-setup.vercel.app](https://amazon-operator-stack-setup.vercel.app)** in any browser. It walks you through the same 7 steps as a multi-step form, your progress is saved automatically as you go, and the final step gives you a single copy-paste command that clones this repo, drops the `.env` in place, and wires it into Claude Code.
+Open **[amazon-operator-stack-setup.vercel.app](https://amazon-operator-stack-setup.vercel.app)** in any browser. It mirrors the CLI wizard as a multi-step form, your progress is saved automatically as you go, and the final step gives you a single copy-paste command that clones this repo, drops the `.env` in place, and wires it into Claude Code.
 
 Privacy-by-design — no backend, your refresh token never leaves your browser. Optional JSON backup of in-progress answers if you want belt-and-braces on the autosave.
 
@@ -82,7 +82,7 @@ Once Claude Code has restarted, paste any of these into the chat:
 | Reconcile against Seller Central  | *"List financial events from yesterday, sum the shipment events, and tell me what to expect in my next payout."* |
 | Find unusual fees                  | *"Pull the last 14 days of financial events. Flag any service fees that look unusual relative to the average."* |
 | Sales & Traffic deep dive         | *"Get last week's Sales & Traffic report. Which ASIN had the highest sessions but the worst conversion rate?"*   |
-| Stockout risk                      | *"Pull my FBA inventory summary. Highlight any SKU with under 30 days of cover at current sales velocity."*       |
+| Sales velocity per SKU             | *"Pull the last 30 days of orders, work out daily sales velocity per SKU, and flag the fastest movers."*          |
 
 Three things Claude does well with these tools:
 

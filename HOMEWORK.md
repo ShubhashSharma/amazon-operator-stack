@@ -62,31 +62,28 @@ Once Amazon approves your Ads API application, your Security Profile is automati
 
 This step uses a localhost callback (port 3000 by default). The wizard already pre-flighted port 3000 for you.
 
-We've not yet shipped a wizard for this — it's a stretch feature. For now, run the manual flow:
-
-```bash
-npm run setup:ads  # not built yet — coming in v1.1
-```
-
-If you're impatient, the manual flow is documented in Amazon's official guide at [advertising.amazon.com/API/docs/en-us/setting-up/generate-api-tokens](https://advertising.amazon.com/API/docs/en-us/setting-up/generate-api-tokens).
+We've not yet shipped a wizard for this (a `setup:ads` command is planned for v1.1). For now, follow the manual flow in Amazon's official guide at [advertising.amazon.com/API/docs/en-us/setting-up/generate-api-tokens](https://advertising.amazon.com/API/docs/en-us/setting-up/generate-api-tokens).
 
 #### D. Drop credentials into `.env`
 
-Open your `.env` and replace the `not-configured` placeholders with the values from the OAuth flow:
+Open your `.env` and replace the `not-configured` placeholders with the values from the OAuth flow, and check the region lines match your account (the wizard pre-filled them for your chosen region; hand-builders often leave the EU defaults in place):
 
 ```
 ADS_API_CLIENT_ID=amzn1.application-oa2-client.xxxx
 ADS_API_CLIENT_SECRET=amzn1.oa2-cs.v1.xxxx
 ADS_API_REFRESH_TOKEN=Atzr|xxxx
+ADS_API_REGION=EU                                        # EU | NA | FE
+ADS_API_ENDPOINT=https://advertising-api-eu.amazon.com   # -eu / (none) / -fe per region
+ADS_PROFILE_ID=                                          # from the Ads API profiles endpoint; leave blank to use the default profile
 ```
 
-#### E. Probe
+#### E. Confirm
 
 ```bash
 npm run smoke-test
 ```
 
-If the Ads endpoints come back green, you're done. The MCP server picks up the new credentials on next restart.
+The probe matrix only covers SP-API endpoints, so there are no Ads rows to watch — the check here is the header line, which should now read `Ads API: configured` instead of `not configured (homework)`. The MCP server picks up the new credentials on next restart.
 
 ---
 
@@ -129,17 +126,17 @@ npm run smoke-test
 
 If you only ticked your primary marketplace during the wizard but you also sell in other countries, you can enable them in two ways.
 
-### Option A — Re-run the wizard's marketplace step
+### Option A — Re-run the wizard
 
 ```bash
 npm run setup
 ```
 
-When prompted, pick "Resume from where I left off" or "Start over" (your call), and re-do the marketplace step ticking the additional countries.
+When prompted, pick **"Start over"** (after a completed setup, "Resume" has nothing left to run, so it won't reach the marketplace step). You'll re-do all seven steps — your existing `.env` is backed up automatically before the new one is written.
 
-### Option B — Edit `.env` directly
+### Option B — Edit `.env` directly (recommended)
 
-Faster if you know the marketplace IDs. Open `.env` and edit:
+Faster, and no re-run needed. Open `.env` and edit:
 
 ```
 SP_API_ENABLED_MARKETPLACE_IDS=A1F83G8C2ARO7P,A1PA6795UKMFR9,A13V1IB3VIYZZH
@@ -185,7 +182,7 @@ This is a powerful upgrade. It's also the upgrade most likely to cause real dama
 
 1. **Wait at least two weeks** before adding write. Use the read-only setup to build trust in how Claude reasons about your data first.
 2. **Add write one tool at a time.** Don't ship the full SP-API surface. Pick one (e.g. campaign budget adjustments) and live with it for a week before adding another.
-3. **Always require confirmation prompts** for irreversible actions. The MCP `requireConfirmation` annotation handles this for you.
+3. **Always require confirmation prompts** for irreversible actions. Mark the tool with `destructiveHint: true` and `readOnlyHint: false` in its MCP annotations — clients like Claude Code use these as the signal to check with the user before running it.
 4. **Always log every write call** to a file alongside `.env`. Most write bugs are diagnosed from logs, not error messages.
 
 ### How to wire a new write tool
@@ -208,7 +205,7 @@ export async function postInventoryAdjustment(
 ): Promise<z.infer<typeof PostInventoryAdjustmentOutput>> {
   // 1. rate-limit
   // 2. spApiHeaders
-  // 3. POST request with idempotency key
+  // 3. POST request (idempotent where the API supports it)
   // 4. handle 401 → refresh + retry once
   // 5. write a log line to ~/.amazon-operator-stack/writes.log
   // 6. return structured + warning content
@@ -217,7 +214,7 @@ export async function postInventoryAdjustment(
 
 Three rules to bake in for every write tool:
 
-1. **Idempotency key** in the request (`X-Amzn-Requestid` header) — Amazon dedupes repeated requests with the same key.
+1. **Design for idempotency.** SP-API has no blanket request-dedupe header (`x-amzn-RequestId` is a *response* header for support cases). Use whatever the specific API offers — feed document IDs, client-supplied order references — and make your tool safe to retry.
 2. **`destructiveHint: true`** in the MCP tool annotations.
 3. **`readOnlyHint: false`** in the MCP tool annotations — Claude treats this as the gate for "this changes things, ask the user first".
 

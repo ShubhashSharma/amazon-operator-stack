@@ -35,13 +35,14 @@ let cached: Config | null = null;
 export function loadConfig(): Config {
   if (cached) return cached;
 
-  // First check process.env (covers manual runs with exported vars), then
-  // fall back to the repo's .env. Since v1.0.1 the .env file is the ONLY
-  // place credentials live — the Claude Code MCP entry carries none.
-  if (!process.env.SP_API_CLIENT_ID) {
-    const envPath = findEnvFile();
-    if (envPath) loadDotenv(envPath);
-  }
+  // Load the repo's .env unconditionally — loadDotenv never overrides vars
+  // already in process.env, so explicit exports still win per-key. Gating
+  // this on a single variable meant one stray SP_API_CLIENT_ID in a shell
+  // profile skipped the .env entirely (crash or, worse, another account's
+  // credentials). Since v1.0.1 the .env file is the ONLY place credentials
+  // live — the Claude Code MCP entry carries none.
+  const envPath = findEnvFile();
+  if (envPath) loadDotenv(envPath);
 
   const required = (k: string) => {
     const v = process.env[k];
@@ -97,16 +98,21 @@ export function loadConfig(): Config {
 }
 
 /**
- * Walk up from this module looking for a .env file alongside package.json.
- * Works whether running from dist/ (built) or src/ (tsx dev).
+ * Walk up from this module to the first directory containing package.json
+ * (the repo root, whether running from dist/ or src/), and use ITS .env or
+ * nothing. Continuing past the repo root could land on an unrelated
+ * $HOME/.env or a monorepo parent's — silently booting on foreign
+ * credentials is far worse than a clean "missing env var" error.
  */
 function findEnvFile(): string | null {
   const start = dirname(fileURLToPath(import.meta.url));
   let dir = start;
   for (let i = 0; i < 6; i++) {
-    const candidate = join(dir, '.env');
     const pkg = join(dir, 'package.json');
-    if (existsSync(candidate) && existsSync(pkg)) return candidate;
+    if (existsSync(pkg)) {
+      const candidate = join(dir, '.env');
+      return existsSync(candidate) ? candidate : null;
+    }
     const parent = dirname(dir);
     if (parent === dir) break;
     dir = parent;
@@ -122,9 +128,24 @@ function loadDotenv(path: string): void {
     const eq = trimmed.indexOf('=');
     if (eq < 0) continue;
     const key = trimmed.slice(0, eq).trim();
-    const value = trimmed.slice(eq + 1).trim();
+    const value = stripQuotes(trimmed.slice(eq + 1).trim());
     if (!process.env[key]) process.env[key] = value;
   }
+}
+
+/**
+ * Hand-edited .env files often carry dotenv-style quotes. Keeping them in
+ * the value produces credentials that fail live with a misleading
+ * "revoked token" diagnosis, so strip one matching surrounding pair.
+ */
+export function stripQuotes(value: string): string {
+  if (value.length >= 2) {
+    const first = value[0];
+    if ((first === '"' || first === "'") && value.endsWith(first)) {
+      return value.slice(1, -1);
+    }
+  }
+  return value;
 }
 
 /** Stderr logger — never write to stdout, that's the MCP transport. */

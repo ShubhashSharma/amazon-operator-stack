@@ -47,6 +47,12 @@ Write-Host "OK  Node v$nodeVersion" -ForegroundColor Cyan
 Write-Host "→  Installing dependencies..." -ForegroundColor Cyan
 Set-Location $RepoDir
 npm install --silent
+# $ErrorActionPreference does not stop on native-command failure in
+# Windows PowerShell 5.1 — check the exit code ourselves.
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "npm install failed (exit $LASTEXITCODE). Fix the errors above and re-run." -ForegroundColor Red
+    exit 1
+}
 
 # Hand off to the wizard
 Write-Host ""

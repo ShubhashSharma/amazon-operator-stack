@@ -28,7 +28,7 @@ export interface RegionConfig {
 export const REGIONS: Record<'EU' | 'NA' | 'FE', RegionConfig> = {
   EU: {
     key: 'EU',
-    label: 'Europe (UK, Germany, France, Italy, Spain, Netherlands, Sweden, Poland, Belgium, Turkey)',
+    label: 'Europe (UK, Germany, France, Italy, Spain, Netherlands, Sweden, Poland, Belgium, Turkey, India)',
     spApiEndpoint: 'https://sellingpartnerapi-eu.amazon.com',
     spApiAwsRegion: 'eu-west-1',
     adsApiEndpoint: 'https://advertising-api-eu.amazon.com',
@@ -42,7 +42,7 @@ export const REGIONS: Record<'EU' | 'NA' | 'FE', RegionConfig> = {
   },
   FE: {
     key: 'FE',
-    label: 'Far East (Japan, Australia, Singapore, India)',
+    label: 'Far East (Japan, Australia, Singapore)',
     spApiEndpoint: 'https://sellingpartnerapi-fe.amazon.com',
     spApiAwsRegion: 'us-west-2',
     adsApiEndpoint: 'https://advertising-api-fe.amazon.com',
@@ -61,6 +61,8 @@ export const MARKETPLACES: Marketplace[] = [
   { code: 'PL', label: 'Poland (amazon.pl)',            id: 'A1C3SOZRARQ6R3', region: 'EU' },
   { code: 'BE', label: 'Belgium (amazon.com.be)',       id: 'AMEN7PMS3EDWL',  region: 'EU' },
   { code: 'TR', label: 'Turkey (amazon.com.tr)',        id: 'A33AVAJ2PDY3EV', region: 'EU' },
+  // Amazon serves amazon.in from the EU regional endpoint, not Far East.
+  { code: 'IN', label: 'India (amazon.in)',             id: 'A21TJRUUN4KGV',  region: 'EU' },
 
   // NA
   { code: 'US', label: 'United States (amazon.com)',    id: 'ATVPDKIKX0DER',  region: 'NA' },
@@ -72,7 +74,6 @@ export const MARKETPLACES: Marketplace[] = [
   { code: 'JP', label: 'Japan (amazon.co.jp)',          id: 'A1VC38T7YXB528',  region: 'FE' },
   { code: 'AU', label: 'Australia (amazon.com.au)',     id: 'A39IBJ37TRP1C6',  region: 'FE' },
   { code: 'SG', label: 'Singapore (amazon.sg)',         id: 'A19VAU5U5O7RUS',  region: 'FE' },
-  { code: 'IN', label: 'India (amazon.in)',             id: 'A21TJRUUN4KGV',   region: 'FE' },
 ];
 
 export function marketplacesByRegion(region: 'EU' | 'NA' | 'FE'): Marketplace[] {
