@@ -266,7 +266,7 @@ Re-run the probe: `npm run smoke-test`. The output tells you exactly which endpo
 
 ## Upgrading from v1.0.0
 
-v1.0.0's wire-up had two bugs, found by Cara Sayer: it registered the server in `~/.claude/settings.json` (which Claude Code ignores for server definitions, so the tools never appeared), and it copied your SP-API credentials into that file and its backups — on most machines readable by every account on the computer.
+v1.0.0's wire-up had two bugs: it registered the server in `~/.claude/settings.json` (which Claude Code ignores for server definitions, so the tools never appeared), and it copied your SP-API credentials into that file and its backups — on most machines readable by every account on the computer.
 
 Fixing is one command, but do all three steps:
 
