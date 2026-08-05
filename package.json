@@ -1,6 +1,6 @@
 {
   "name": "amazon-operator-stack",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Connect your Amazon seller account to Claude Code in 30 minutes. Read your orders, inventory, sales, traffic, and finances. Built for Seller Sessions Live 2026.",
   "type": "module",
   "main": "dist/server.js",
@@ -13,6 +13,7 @@
     "resume": "tsx src/wizard/index.ts --resume",
     "smoke-test": "tsx src/probe.ts",
     "wire-claude": "tsx src/wire-claude-code.ts",
+    "doctor": "tsx src/doctor.ts",
     "mock": "tsx tools/mock-sp-api.ts",
     "demo": "bash scripts/demo.sh",
     "build": "tsc",
@@ -46,7 +47,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/sellersessions/amazon-operator-stack.git"
+    "url": "https://github.com/ShubhashSharma/amazon-operator-stack.git"
   },
   "keywords": [
     "amazon",

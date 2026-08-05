@@ -35,8 +35,9 @@ You don't need to know what an MCP server, OAuth token, or LWA app is. The wizar
 | MCP server connecting Claude → SP-API      | This folder, after `npm install` and `npm run build` |
 | Read access to Orders, Finances, Sales & Traffic | Three tools registered with Claude Code          |
 | Local credentials file (`.env`)           | This folder, git-ignored, never sent anywhere    |
-| Claude Code MCP entry                     | `~/.claude/settings.json` (additive — your existing entries are untouched) |
+| Claude Code MCP entry                     | `~/.claude.json` user scope, via `claude mcp` — command only, no credentials; your existing entries are untouched |
 | Probe matrix (`npm run smoke-test`)        | Runs any time, tells you which roles are working |
+| Health check (`npm run doctor`)            | Checks registration → server → credentials → Amazon, in order, with the fix for whichever layer is broken |
 
 ---
 
@@ -51,9 +52,12 @@ npm install
 npm run setup
 npm run build
 npm run wire-claude
+npm run doctor
 ```
 
-That's it. Restart Claude Code, then try one of the [sample questions](#try-it) below.
+That's it. Restart Claude Code, then try one of the [sample questions](#try-it) below. `doctor` confirms the whole chain (registered → server starts → credentials → Amazon) and names the fix if any layer is broken.
+
+> Upgrading from v1.0.0? Run the same commands — `wire-claude` migrates you — then read [Upgrading from v1.0.0](./SETUP.md#upgrading-from-v100) in SETUP.md: rotating your SP-API credentials is strongly recommended.
 
 If you're missing prerequisites, follow the full guide in [SETUP.md](./SETUP.md) instead.
 

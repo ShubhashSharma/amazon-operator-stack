@@ -66,7 +66,7 @@ In your terminal:
 
 ```bash
 cd ~/code                 # or wherever you keep your projects
-git clone https://github.com/sellersessions/amazon-operator-stack.git
+git clone https://github.com/ShubhashSharma/amazon-operator-stack.git
 cd amazon-operator-stack
 npm install
 ```
@@ -198,14 +198,21 @@ Next:  npm run wire-claude    Register the server with Claude Code
 
 ## 4. Wire it into Claude Code
 
-Two more commands and you're done:
+Three more commands and you're done:
 
 ```bash
 npm run build
 npm run wire-claude
+npm run doctor
 ```
 
-`npm run build` compiles the TypeScript into JavaScript that Claude Code can run. `npm run wire-claude` adds an entry to your `~/.claude/settings.json` so Claude Code knows about the new server.
+`npm run build` compiles the TypeScript into JavaScript that Claude Code can run. `npm run wire-claude` registers the server with Claude Code through the official `claude mcp` CLI (user scope, so it works in every project, stored in `~/.claude.json`) and then **verifies** the registration took — it will tell you loudly if it didn't. `npm run doctor` checks the whole chain end to end: registered → server starts → credentials present → Amazon answers.
+
+Your credentials never leave the `.env` file in this folder. The Claude Code entry contains only the command to launch the server — no secrets — so nothing sensitive sits in Claude's config files or their backups.
+
+> **Running this from inside a Claude Code session?** Wire-up works, but the running session can overwrite the registration when it exits. The script detects this and tells you what to do: fully quit Claude Code, run `npm run doctor` in a fresh terminal, then start Claude Code again.
+
+> **Note for `~/.claude/settings.json`:** that file holds Claude Code's settings (permissions, theme, hooks). It does **not** load MCP server definitions — an `mcpServers` block written there is ignored. v1.0.0 of this repo got that wrong; if you installed it, `npm run wire-claude` migrates you automatically (see [Upgrading from v1.0.0](#upgrading-from-v100)).
 
 Restart Claude Code (or run `claude` again from your terminal). The new tools appear automatically.
 
@@ -244,15 +251,28 @@ This is normal if you're not in Brand Registry. Sales & Traffic data is reserved
 
 ### Claude Code doesn't see the new tools
 
-Three checks, in order:
+Run `npm run doctor`. It checks the four layers in order — registered, server starts, credentials present, Amazon answers — and stops at the first broken one with the exact fix. The two most common answers:
 
-1. Did you run `npm run build`? Without this, there's no compiled server for Claude to launch.
-2. Did you restart Claude Code? Settings are read on startup, not live.
-3. Run `cat ~/.claude/settings.json | grep amazon-operator-stack`. If nothing prints, re-run `npm run wire-claude`.
+1. You didn't restart Claude Code. Registration is read on startup, not live.
+2. You ran `npm run wire-claude` from inside a Claude Code session, and that session overwrote the registration when it exited. Quit Claude Code fully and re-run `npm run wire-claude` from a plain terminal.
+
+To see it from Claude Code's side: `claude mcp list | grep amazon-operator-stack` shows what Claude Code actually loaded (not just what's on disk).
 
 ### Anything else
 
 Re-run the probe: `npm run smoke-test`. The output tells you exactly which endpoint is unhappy and what the next step is.
+
+---
+
+## Upgrading from v1.0.0
+
+v1.0.0's wire-up had two bugs, found by Cara Sayer: it registered the server in `~/.claude/settings.json` (which Claude Code ignores for server definitions, so the tools never appeared), and it copied your SP-API credentials into that file and its backups — on most machines readable by every account on the computer.
+
+Fixing is one command, but do all three steps:
+
+1. `git pull && npm install && npm run wire-claude` — migrates the old entry (any credentials found in it are copied into `.env` first, so nothing is lost), registers properly, and locks old backup files to owner-only.
+2. `npm run doctor` — confirm all four layers are green. After that you can delete the old backups; the doctor output and wire-up print the exact `rm` command.
+3. **Rotate your SP-API credentials.** The old files were world-readable on your machine; permissions can be fixed retroactively, exposure can't. In Seller Central → Apps & Services → Develop Apps: rotate the LWA client secret and re-authorise to get a fresh refresh token, then run `npm run resume` and paste the new values. One caution: if that LWA app is shared with other tools you use, rotating the secret affects them too — coordinate before you rotate.
 
 ---
 

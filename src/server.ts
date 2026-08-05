@@ -27,7 +27,7 @@ async function main(): Promise<void> {
   const server = new McpServer(
     {
       name:    'amazon-operator-stack',
-      version: '1.0.0',
+      version: '1.0.1',
     },
     {
       capabilities: { logging: {} },
@@ -59,5 +59,6 @@ async function main(): Promise<void> {
 main().catch((err) => {
   console.error('Fatal: amazon-operator-stack failed to start');
   console.error(err);
+  console.error('Diagnose with: npm run doctor  (from the amazon-operator-stack folder)');
   process.exit(1);
 });

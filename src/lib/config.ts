@@ -35,8 +35,9 @@ let cached: Config | null = null;
 export function loadConfig(): Config {
   if (cached) return cached;
 
-  // First check process.env (Claude Code injects via "env" in settings.json),
-  // then fall back to a .env file two directories up from this module.
+  // First check process.env (covers manual runs with exported vars), then
+  // fall back to the repo's .env. Since v1.0.1 the .env file is the ONLY
+  // place credentials live — the Claude Code MCP entry carries none.
   if (!process.env.SP_API_CLIENT_ID) {
     const envPath = findEnvFile();
     if (envPath) loadDotenv(envPath);
